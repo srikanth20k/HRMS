@@ -11,8 +11,16 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env sitting next to manage.py
-load_dotenv(BASE_DIR / '.env')
+# Load environment variables from a dotenv file next to manage.py.
+# APP_ENV (default "development") picks the environment-specific file
+# (.env.development / .env.production); a plain .env is still honoured as a
+# fallback. load_dotenv keeps override=False, so real process env vars and
+# the first file loaded win — i.e. .env.<APP_ENV> takes priority over .env.
+APP_ENV = os.environ.get('APP_ENV') or os.environ.get('DJANGO_ENV') or 'development'
+for _env_file in (f'.env.{APP_ENV}', '.env'):
+    _env_path = BASE_DIR / _env_file
+    if _env_path.exists():
+        load_dotenv(_env_path)
 
 
 def env_bool(name, default=False):

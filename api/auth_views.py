@@ -100,6 +100,7 @@ def login(request):
         body = parse_body(request)
         email = norm_email(body.get('email'))
         password = body.get('password') or ''
+        role = str(body.get('role') or '').strip().lower()
         if not email or not password:
             return err('email and password are required')
 
@@ -109,6 +110,10 @@ def login(request):
             return err('Invalid email or password', 401)
         if user.status != 'active':
             return err('This account is disabled. Contact your administrator.', 403)
+        # Role gate: the selected role must match the account's actual role.
+        # Validated before any OTP is issued so a wrong choice fails fast.
+        if role and role != (user.role or '').strip().lower():
+            return err('The selected role does not match this account. Please choose your correct role.', 403)
 
         result = _issue_otp(user)
         if not result.get('ok'):
